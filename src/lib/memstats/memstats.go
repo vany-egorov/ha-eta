@@ -24,6 +24,12 @@ func (it *Memstats) log() seelog.LoggerInterface { return it.ctx.Logger("memstat
 func (it *Memstats) Period() time.Duration       { return it.ctx.ConfigPeriodMemstats() }
 func (it *Memstats) Stop()                       { it.stop <- struct{}{} }
 func (it *Memstats) Done()                       { <-it.done }
+func (it *Memstats) DoneWithContext(ctx context.Context) {
+	select {
+	case <-it.done:
+	case <-ctx.Done():
+	}
+}
 
 func (it *Memstats) GoStart() *Memstats {
 	go it.Start()
