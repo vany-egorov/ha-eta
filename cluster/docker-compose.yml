@@ -1,0 +1,84 @@
+version: "3.5"
+
+x-:
+  ha-eta-node: &x-ha-eta-node
+    depends_on:
+      - ha-eta-build
+    build:
+      context: ./ha-eta-node/
+    networks:
+      - ha-eta
+
+  ha-eta-cache: &x-ha-eta-cache
+    build:
+      context: ./ha-eta-cache/
+    networks:
+      - ha-eta
+
+services:
+  ha-eta-build:
+    build:
+      dockerfile: ./cluster/ha-eta-build/Dockerfile
+      context: ..
+    image: ha-eta-build
+
+
+  ha-eta-node-01:
+    <<: *x-ha-eta-node
+    hostname: ha-eta-node-01
+
+  ha-eta-node-02:
+    <<: *x-ha-eta-node
+    hostname: ha-eta-node-02
+
+  ha-eta-node-03:
+    <<: *x-ha-eta-node
+    hostname: ha-eta-node-03
+
+
+  ha-eta-cache-01:
+    <<: *x-ha-eta-cache
+    hostname: ha-eta-cache-01
+    volumes:
+      - ./ha-eta-cache/etc/nginx/sites-available:/etc/nginx/sites-available:ro
+      - ./ha-eta-cache/etc/nginx/sites-available.d/01:/etc/nginx/sites-available.d:ro
+    depends_on:
+      - ha-eta-node-01
+
+  ha-eta-cache-02:
+    <<: *x-ha-eta-cache
+    hostname: ha-eta-cache-02
+    volumes:
+      - ./ha-eta-cache/etc/nginx/sites-available:/etc/nginx/sites-available:ro
+      - ./ha-eta-cache/etc/nginx/sites-available.d/02:/etc/nginx/sites-available.d:ro
+    depends_on:
+      - ha-eta-node-02
+
+  ha-eta-cache-03:
+    <<: *x-ha-eta-cache
+    hostname: ha-eta-cache-03
+    volumes:
+      - ./ha-eta-cache/etc/nginx/sites-available:/etc/nginx/sites-available:ro
+      - ./ha-eta-cache/etc/nginx/sites-available.d/03:/etc/nginx/sites-available.d:ro
+    depends_on:
+      - ha-eta-node-03
+
+
+  ha-eta-balancer:
+    depends_on:
+      - ha-eta-cache-01
+      - ha-eta-cache-02
+      - ha-eta-cache-03
+    build:
+      context: ./ha-eta-balancer
+    networks:
+      - ha-eta
+    volumes:
+      - ./ha-eta-balancer/etc/nginx/sites-available:/etc/nginx/sites-available:ro
+    ports:
+      # HOST:CONTAINER
+      - "9179:80"
+
+networks:
+  ha-eta:
+    name: ha-eta

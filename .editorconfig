@@ -1,0 +1,38 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{go,c,h,sh}]
+indent_style = tab
+
+[Makefile]
+indent_style = tab
+
+[Dockerfile]
+indent_style = space
+indent_size = 2
+
+[cluster/**/nginx/**/*.conf]
+indent_style = tab
+indent_size = 2
+
+[cluster/**/nginx/**/default]
+indent_style = tab
+indent_size = 2
+
+[.bashrc]
+indent_style = tab
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.proto]
+indent_style = tab
+indent_size = 2

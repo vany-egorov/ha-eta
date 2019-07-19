@@ -1,0 +1,18 @@
+upstream ha-eta-cache {
+	server ha-eta-cache-01;
+	server ha-eta-cache-02;
+	server ha-eta-cache-03;
+}
+
+server {
+	listen 80;
+
+	error_log /var/log/nginx/error.log;
+	access_log /var/log/nginx/access.log;
+	# error_log /dev/stderr;
+	# access_log /dev/stdout;
+
+	location / {
+		proxy_pass http://ha-eta-cache;
+	}
+}

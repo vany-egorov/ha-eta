@@ -1,0 +1,14 @@
+include /etc/nginx/sites-available.d/*.conf;
+
+server {
+	listen 80;
+
+	error_log /var/log/nginx/error.log;
+	access_log /var/log/nginx/access.log;
+	# error_log /dev/stderr;
+	# access_log /dev/stdout;
+
+	location / {
+		proxy_pass http://ha-eta-node;
+	}
+}
