@@ -6,29 +6,33 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
-	"time"
 
-	log "github.com/cihub/seelog"
-	"github.com/gin-gonic/gin"
 	cli "gopkg.in/urfave/cli.v1"
 
-	apiV1 "github.com/vany-egorov/ha-eta/apps/node/api-v1/handlers"
-	"github.com/vany-egorov/ha-eta/handlers"
-	"github.com/vany-egorov/ha-eta/lib/gin-contrib/prefix"
+	"github.com/gin-gonic/gin"
+	"github.com/vany-egorov/ha-eta/lib/log"
+	"github.com/vany-egorov/ha-eta/lib/memstats"
 )
 
 type App struct {
+	ctx Context
 }
 
 func (it *App) start() (outErr error) {
+	gin.SetMode(gin.ReleaseMode)
 	router := it.NewRouter()
+
+	w8Terminate := it.ctx.cfg().Timeout.WaitTerminate
+
+	serverAddr := it.ctx.cfg().serverAddr()
 	server := &http.Server{
-		Addr:    ":80",
+		Addr:    serverAddr,
 		Handler: router,
 	}
 
-	stop := make(chan struct{})
+	serverErrChan := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
@@ -42,23 +46,26 @@ func (it *App) start() (outErr error) {
 		select {
 		case _, ok := <-signalChan:
 			if ok {
-				log.Infof("(SIGINT SIGTERM SIGQUIT) will shutdown")
+				log.Log(logger(), log.Info, "(SIGINT SIGTERM SIGQUIT) will shutdown")
 			}
-		case <-stop:
+		case <-serverErrChan:
 		}
 
 		cancel()
 	}()
 
+	wg := sync.WaitGroup{}
+
 	wg.Add(1)
 	go func() {
-		defer func() { <-ctx.Done(); wg.Done() }()
+		<-ctx.Done()
+		defer wg.Done()
 
-		ctxTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second) // TODO: config
+		ctxTimeout, cancel := context.WithTimeout(context.Background(), w8Terminate)
 		defer cancel()
 
 		if err := server.Shutdown(ctxTimeout); err != nil {
-			log.Errorf("server shutdown failed: %s", err)
+			log.Log(logger(), log.Info, fmt.Sprintf("server shutdown failed: %s", err))
 		}
 	}()
 
@@ -66,38 +73,59 @@ func (it *App) start() (outErr error) {
 	go func() {
 		defer wg.Done()
 
-		ctxTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second) // TODO: config
-		defer cancel()
+		worker := memstats.Worker{}
+		worker.Initialize(
+			memstats.FnLog(log.LogFnWithLogger(logger())),
+			memstats.Period(it.ctx.cfg().Period.Memstats),
+		)
+		worker.StartWithCtx(ctx)
 
-		memstats.StartWithCtx(ctx)
-		memstats.DoneWithCtx(ctxTimeout)
+		ctxTimeout, cancel := context.WithTimeout(context.Background(), w8Terminate)
+		defer cancel()
+		worker.DoneWithContext(ctxTimeout)
 	}()
 
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		close(stop)
+	log.Log(logger(), log.Info,
+		fmt.Sprintf("application with (:pid %d) started", os.Getpid()))
+
+	log.Log(logger(), log.Info,
+		fmt.Sprintf("listening on %s", serverAddr))
+
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		close(serverErrChan)
 		outErr = err
 	}
 
-	<-ctx.Done()
 	wg.Wait()
 
 	return outErr
 }
 
-func (it *App) initialize(ctx *cli.Context) error {
+// apply flags, reload config, reload loggers
+func (it *App) initialize(cliCtx *cli.Context, actn action) error {
+	cfg := new(config)
+
+	if e := cfg.build(cliCtx, actn); e != nil {
+		return e
+	}
+
+	if e := initLogger(cfg); e != nil {
+		return e
+	}
+
+	it.ctx.setCfg(cfg)
+
 	return nil
 }
 
-func (it *App) main() error {
-	if err := it.initialize(cliCtx); err != nil {
-		return fmt.Errorf("intialization failed: %s\n", e.Error())
+func (it *App) main(cliCtx *cli.Context, actn action) error {
+	if err := it.initialize(cliCtx, actn); err != nil {
+		return fmt.Errorf("intialization failed: %s\n", err.Error())
 	}
 
 	return it.start()
 }
 
-func (it *App) Main(cliCtx *cli.Context) {
-	if e := it.main(cliCtx); e != nil {
-		fmt.Fprint(os.Stderr, e.Error())
-	}
+func (it *App) Main(cliCtx *cli.Context, actn action) error {
+	return it.main(cliCtx, actn)
 }

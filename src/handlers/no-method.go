@@ -6,6 +6,6 @@ import (
 
 func NoMethod(c *gin.Context) {
 	c.JSON(405, gin.H{
-		"error": "method is not allowed",
+		"message": "method is not allowed",
 	})
 }

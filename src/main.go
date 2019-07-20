@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	cli "gopkg.in/urfave/cli.v1"
@@ -12,19 +13,22 @@ func main() {
 	nodeApp := node.App{}
 
 	app := cli.NewApp()
+
+	cli.VersionPrinter = versionPrinter
+
+	app.Version = version
 	app.Name = "ha-eta"
 	app.Usage = "ha-eta control daemons, services, utils, tools, clis"
-	app.Version = version
 
 	// specify command by default
-	app.Flags = node.FLAGS
-	app.Action = func(c *cli.Context) { nodeApp.Main(c, node.ActionMain) }
-	cli.VersionPrinter = nodeApp.ShowVersionAndExit
+	nodeApp.CmdTrySetDefaultAction(app)
 
 	app.Commands = []cli.Command{
 		nodeApp.Cmd(),
 		// ... add other commands here if any
 	}
 
-	app.Run(os.Args)
+	if e := app.Run(os.Args); e != nil {
+		fmt.Fprint(os.Stderr, e.Error())
+	}
 }

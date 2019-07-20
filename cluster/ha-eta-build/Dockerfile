@@ -9,7 +9,7 @@ RUN apt-get install -y \
 
 # <golang download>
 WORKDIR /opt
-RUN curl -O "https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz"
+RUN curl -O "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz"
 RUN mv ./go*tar.gz ./go.tar.gz
 RUN tar -xf ./go.tar.gz
 RUN rm -rf ./go.tar.gz
@@ -32,8 +32,3 @@ RUN GO_BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%S) GOOS=${GOOS} GOARCH=${GOARCH} \
   go build \
     -v \
     -ldflags "${GO_LDFLAGS}" -o ./ha-eta ./common.go ./main.go
-
-RUN GO_BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%S) GOOS=${GOOS} GOARCH=${GOARCH} \
-  go build \
-    -v \
-    -ldflags "${GO_LDFLAGS}" -o ./ha-eta-node ./common.go ./main-node.go

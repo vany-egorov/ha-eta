@@ -2,23 +2,36 @@ package mwLog
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
-	logLevel "github.com/vany-egorov/ha-eta/lib/log-level"
+	bufPool "github.com/vany-egorov/ha-eta/lib/buf-pool"
+	"github.com/vany-egorov/ha-eta/lib/log"
 )
 
-func New(fnLog func(logLevel.Level)) gin.HandlerFunc {
-	return NewWithFilter(fnLog, func(c *gin.Context) bool { return true })
+type fnLogType func(log.Level, string)
+type fnFilterType func(*gin.Context) bool
+
+var toDiscard fnLogType = func(lvl log.Level, msg string) {
+	fmt.Fprint(ioutil.Discard, msg)
 }
 
-func NewWithFilter(fnLog func(logLevel.Level), fnFilter func(*gin.Context) bool) gin.HandlerFunc {
+func New(fnLog fnLogType) gin.HandlerFunc {
+	return NewWithFilter(fnLog, func(c *gin.Context) bool { return false })
+}
+
+func NewWithFilter(fnLog fnLogType, fnFilter fnFilterType) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if fn := fnFilter; fn != nil {
+		if fn := fnFilter; fn != nil && fn(c) {
 			c.Next()
 			return
+		}
+
+		if fnLog == nil {
+			fnLog = toDiscard
 		}
 
 		start := time.Now()
@@ -40,6 +53,8 @@ func NewWithFilter(fnLog func(logLevel.Level), fnFilter func(*gin.Context) bool)
 		}
 
 		buf := bufPool.NewBuf()
+		defer buf.Release()
+
 		buf.WriteString(prefix)
 		buf.WriteString(" | ")
 		buf.WriteString(fmt.Sprintf("%3d", httpStatus))
@@ -60,19 +75,22 @@ func NewWithFilter(fnLog func(logLevel.Level), fnFilter func(*gin.Context) bool)
 
 		switch {
 		case httpStatus >= http.StatusInternalServerError:
-			fnLog(logLevel.Error, w.String())
+			fnLog(log.Error, buf.String())
 		case httpStatus >= http.StatusBadRequest:
-			fnLog(logLevel.Warn, w.String())
+			fnLog(log.Warn, buf.String())
 		case isPolling:
-			fnLog(logLevel.Debug, w.String())
+			fnLog(log.Debug, buf.String())
 		default:
-			fnLog(logLevel.Info, w.String())
+			fnLog(log.Info, buf.String())
 		}
 
 		for _, e := range c.Errors {
-			logger.GetLogger().Errorf("%s | %s", prefix, e.Error())
-		}
+			buf.Reset()
+			buf.WriteString(prefix)
+			buf.WriteString(" | ")
+			buf.WriteString(e.Error())
 
-		pool.Put(w)
+			fnLog(log.Error, buf.String())
+		}
 	}
 }

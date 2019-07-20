@@ -1,15 +1,22 @@
 package h
 
 import (
-	"os"
-
 	"github.com/gin-gonic/gin"
+
+	v1 "github.com/vany-egorov/ha-eta/apps/node/api-v1"
+	apiErrors "github.com/vany-egorov/ha-eta/apps/node/api-v1/errors"
 )
 
 func ETAMin(c *gin.Context) {
-	name, _ := os.Hostname()
+	req := v1.ReqETAMin{}
 
-	c.JSON(200, gin.H{
-		"hostname": name,
-	})
+	if err := c.Bind(&req); err != nil {
+		v1.Send(c.Writer, apiErrors.ETAMinReqParse)
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		v1.Send(c.Writer, err)
+		return
+	}
 }

@@ -1,18 +1,27 @@
 package node
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+
+	"github.com/vany-egorov/ha-eta/handlers"
+	mwLog "github.com/vany-egorov/ha-eta/lib/gin-contrib/mw-log"
+	mwPrefix "github.com/vany-egorov/ha-eta/lib/gin-contrib/mw-prefix"
+	"github.com/vany-egorov/ha-eta/lib/log"
+
+	apiV1 "github.com/vany-egorov/ha-eta/apps/node/api-v1/handlers"
+)
 
 func (it *App) NewRouter() *gin.Engine {
-	gin.SetMode(gin.ReleaseMode)
-	logMw := mwLog.New(func(_) {})
+	// or just `mwLog.New(log.Log)`
+	logMw := mwLog.New(func(lvl log.Level, msg string) {
+		log.Log(logger(), lvl, msg)
+	})
 
 	r := gin.New()
 	r.Use(
 		gin.Recovery(),
-		prefix.New(),
+		mwPrefix.New(),
 	)
-
-	r.Use(func(c *gin.Context) { c.Set("app-cxt", nil); c.Next() })
 
 	r.HandleMethodNotAllowed = true
 	r.NoRoute(handlers.NoRoute, logMw)
@@ -21,6 +30,8 @@ func (it *App) NewRouter() *gin.Engine {
 	{
 		α := r.Group("/api/v1")
 		α.Use(logMw)
+
+		α.Use(func(c *gin.Context) { c.Set("app-cxt", &it.ctx); c.Next() })
 
 		α.GET("/eta/min", apiV1.ETAMin)
 	}
