@@ -9,9 +9,11 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/gin-gonic/gin"
 	cli "gopkg.in/urfave/cli.v1"
 
-	"github.com/gin-gonic/gin"
+	"github.com/vany-egorov/ha-eta/lib/cache"
+	geoEngine "github.com/vany-egorov/ha-eta/lib/geo-engine"
 	"github.com/vany-egorov/ha-eta/lib/log"
 	"github.com/vany-egorov/ha-eta/lib/memstats"
 )
@@ -114,6 +116,14 @@ func (it *App) initialize(cliCtx *cli.Context, actn action) error {
 	}
 
 	it.ctx.setCfg(cfg)
+
+	if v, e := geoEngine.NewGeoEngine(&cfg.GeoEngine); e != nil {
+		it.ctx.setGeoEngine(v)
+	}
+
+	if v, e := cache.NewCache(&cfg.Cache); e != nil {
+		it.ctx.setCache(v)
+	}
 
 	return nil
 }

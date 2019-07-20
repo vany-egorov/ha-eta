@@ -9,6 +9,7 @@ import (
 
 	cli "gopkg.in/urfave/cli.v1"
 
+	"github.com/vany-egorov/ha-eta/lib/cache"
 	geoEngine "github.com/vany-egorov/ha-eta/lib/geo-engine"
 	"github.com/vany-egorov/ha-eta/lib/geo-engine/wheely"
 )
@@ -28,6 +29,7 @@ type config struct {
 	}
 
 	GeoEngine geoEngine.Config
+	Cache     cache.Config
 }
 
 func (it *config) serverAddr() string {
@@ -77,9 +79,9 @@ func (it *config) parse(c *cli.Context) error {
 			return fmt.Errorf("error parse wheely-url: %s", err)
 		}
 
-		if cfg, ok := it.GeoEngine.Internal.(*wheely.Config); ok && cfg != nil {
+		it.GeoEngine.WithWheely(func(cfg *wheely.Config) {
 			cfg.Url = u
-		}
+		})
 	}
 
 	return nil

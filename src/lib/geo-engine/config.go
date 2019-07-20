@@ -17,12 +17,18 @@ type ConfigInternal interface {
 type Config struct {
 	config `yaml:"-"`
 
-	Internal ConfigInternal `yaml:"-"`
+	internal ConfigInternal `yaml:"-"`
 }
 
 func (it *Config) Defaultize() {
-	if intrl := it.Internal; intrl != nil {
+	if intrl := it.internal; intrl != nil {
 		intrl.Defaultize()
+	}
+}
+
+func (it *Config) WithWheely(fn func(cfg *wheely.Config)) {
+	if v, ok := it.internal.(*wheely.Config); ok {
+		fn(v)
 	}
 }
 
@@ -31,11 +37,11 @@ func (it *Config) InitWithKind(kind Kind) error {
 
 	switch kind {
 	case KindWheely:
-		it.Internal = new(wheely.Config)
+		it.internal = new(wheely.Config)
 
 	default:
 		return fmt.Errorf(
-			"got '%s' kind while initializing geo-engine config, only '%s' is supported",
+			"got '%s' kind while initializing geo-engine config: only '%s' is supported",
 			KindWheely,
 		)
 	}
