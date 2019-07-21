@@ -115,13 +115,21 @@ func (it *App) initialize(cliCtx *cli.Context, actn action) error {
 		return e
 	}
 
+	it.ctx.setFnLog(
+		log.LogFnWithLogger(
+			logger()))
+
 	it.ctx.setCfg(cfg)
 
 	if v, e := geoEngine.NewGeoEngine(&cfg.GeoEngine); e != nil {
+		return e
+	} else {
 		it.ctx.setGeoEngine(v)
 	}
 
 	if v, e := cache.NewCache(&cfg.Cache); e != nil {
+		return e
+	} else {
 		it.ctx.setCache(v)
 	}
 

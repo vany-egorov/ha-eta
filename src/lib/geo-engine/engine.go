@@ -8,8 +8,8 @@ import (
 )
 
 type Engine interface {
-	DoCars(ctx context.Context, lat, lng float64, any interface{}) error
-	DoPredict(ctx context.Context) error
+	DoCars(ctx context.Context, lat, lng float64, limit uint64, any, events interface{}) error
+	DoPredict(ctx context.Context, lat, lng float64, anySrc, anyDst, events interface{}) error
 }
 
 func NewGeoEngine(cfg *Config) (Engine, error) {

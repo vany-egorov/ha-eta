@@ -1,18 +1,24 @@
 package wheely
 
 import (
+	"net/http"
 	"net/url"
 	"time"
 )
 
 const (
-	pathCars    = "/cars"
-	pathPredict = "/predict"
+	methodCars = http.MethodGet
+	pathCars   = "/cars"
+
+	methodPredict = http.MethodPost
+	pathPredict   = "/predict"
 )
 
 var (
 	defaultUrl    *url.URL = nil
 	DefaultUrlRaw string   = "https://dev-api.wheely.com/fake-eta"
+
+	DefaultCarsLimit uint64 = 10
 
 	defaultTimeout                   time.Duration = 1 * time.Second
 	defaultMaxIDLEConnectionsPerHost int           = 16

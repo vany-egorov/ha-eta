@@ -6,6 +6,8 @@ import (
 
 func NoRoute(c *gin.Context) {
 	c.JSON(404, gin.H{
-		"error": "check if requested URL is valid. maybe misspelled? check docs, configs.",
+		"code": 404,
+
+		"message": "check if requested URL is valid. maybe misspelled? check docs, configs.",
 	})
 }

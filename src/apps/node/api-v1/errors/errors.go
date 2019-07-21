@@ -11,17 +11,26 @@ const (
 	Unknown Err = iota
 
 	ETAMinReqParse
+	ETAMinGeoEngineCars
+	ETAMinGeoEnginePredict
+	ETAMinNoETAsFound
 )
 
 var (
 	errText = map[Err]string{
-		ETAMinReqParse: "api/v1:(eta/min): error parse",
+		ETAMinReqParse:         "api/v1:(eta/min): error parse or query-values missing",
+		ETAMinGeoEngineCars:    "api/v1:(eta/min): geo-engine call error",
+		ETAMinGeoEnginePredict: "api/v1:(eta/min): geo-engine predict error",
+		ETAMinNoETAsFound:      "api/v1:(eta/min): not ETAs found",
 	}
 
 	errHTTPStatus = map[Err]int{
 		Unknown: http.StatusInternalServerError,
 
-		ETAMinReqParse: http.StatusBadRequest,
+		ETAMinReqParse:         http.StatusBadRequest,
+		ETAMinGeoEngineCars:    http.StatusBadGateway,
+		ETAMinGeoEnginePredict: http.StatusBadGateway,
+		ETAMinNoETAsFound:      http.StatusNotFound,
 	}
 )
 

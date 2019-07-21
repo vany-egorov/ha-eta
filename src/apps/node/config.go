@@ -72,7 +72,7 @@ func (it *config) parse(c *cli.Context) error {
 		}
 	}
 
-	if c.IsSet("geo-engine-kind") {
+	if c.IsSet("wheely-url") {
 		raw := c.String("wheely-url")
 		u, err := url.Parse(raw)
 		if err != nil {
@@ -81,6 +81,13 @@ func (it *config) parse(c *cli.Context) error {
 
 		it.GeoEngine.WithWheely(func(cfg *wheely.Config) {
 			cfg.Url = u
+		})
+	}
+
+	if c.IsSet("wheely-cars-limit") {
+		v := c.Uint64("wheely-cars-limit")
+		it.GeoEngine.WithWheely(func(cfg *wheely.Config) {
+			cfg.CarsLimit = v
 		})
 	}
 

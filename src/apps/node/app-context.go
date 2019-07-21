@@ -5,6 +5,7 @@ import (
 
 	cache "github.com/vany-egorov/ha-eta/lib/cache"
 	geoEngine "github.com/vany-egorov/ha-eta/lib/geo-engine"
+	"github.com/vany-egorov/ha-eta/lib/log"
 )
 
 type Context struct {
@@ -16,6 +17,9 @@ type Context struct {
 
 	cacheLock sync.RWMutex
 	cch       cache.Cache
+
+	fnLogLock sync.RWMutex
+	fnLog     func(log.Level, string)
 }
 
 func (it *Context) setCfg(v *config) *config {
@@ -40,7 +44,7 @@ func (it *Context) setGeoEngine(v geoEngine.Engine) geoEngine.Engine {
 	return old
 }
 
-func (it *Context) geoEngine(v geoEngine.Engine) geoEngine.Engine {
+func (it *Context) GeoEngine() geoEngine.Engine {
 	it.geoEngineLock.RLock()
 	defer it.geoEngineLock.RUnlock()
 	return it.geo
@@ -54,8 +58,22 @@ func (it *Context) setCache(v cache.Cache) cache.Cache {
 	return old
 }
 
-func (it *Context) cache(v cache.Cache) cache.Cache {
+func (it *Context) Cache() cache.Cache {
 	it.cacheLock.RLock()
 	defer it.cacheLock.RUnlock()
 	return it.cch
+}
+
+func (it *Context) setFnLog(v func(log.Level, string)) func(log.Level, string) {
+	it.fnLogLock.Lock()
+	defer it.fnLogLock.Unlock()
+	old := it.fnLog
+	it.fnLog = v
+	return old
+}
+
+func (it *Context) FnLog() func(log.Level, string) {
+	it.fnLogLock.RLock()
+	defer it.fnLogLock.RUnlock()
+	return it.fnLog
 }

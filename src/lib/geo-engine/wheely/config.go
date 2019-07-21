@@ -11,6 +11,8 @@ import (
 type Config struct {
 	Url *url.URL
 
+	CarsLimit uint64 `yaml:"cars-limit"`
+
 	Timeout                   time.Duration `yaml:"timeout"`
 	MaxIdleConnectionsPerHost int           `yaml:"max-idle-connections-per-host"`
 	DialTimeout               time.Duration `yaml:"dial-timeout"`
@@ -23,6 +25,10 @@ type Config struct {
 func (it *Config) Defaultize() {
 	if it.Url == nil {
 		it.Url = defaultUrl
+	}
+
+	if it.CarsLimit == 0 {
+		it.CarsLimit = DefaultCarsLimit
 	}
 
 	if it.Timeout == 0 {
@@ -64,6 +70,10 @@ type Arg func(*Config)
 
 func Url(v *url.URL) Arg {
 	return func(cfg *Config) { cfg.Url = v }
+}
+
+func CarsLimit(v uint64) Arg {
+	return func(cfg *Config) { cfg.CarsLimit = v }
 }
 
 func Timeout(v time.Duration) Arg {

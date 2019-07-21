@@ -31,7 +31,7 @@ func (it *App) NewRouter() *gin.Engine {
 		α := r.Group("/api/v1")
 		α.Use(logMw)
 
-		α.Use(func(c *gin.Context) { c.Set("app-cxt", &it.ctx); c.Next() })
+		α.Use(func(c *gin.Context) { c.Set("service-ctx", &it.ctx); c.Next() })
 
 		α.GET("/eta/min", apiV1.ETAMin)
 	}

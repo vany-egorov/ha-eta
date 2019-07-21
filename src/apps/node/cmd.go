@@ -45,6 +45,11 @@ var flagsMain []cli.Flag = []cli.Flag{
 		Usage: "url to wheely api",
 		Value: wheely.DefaultUrlRaw,
 	},
+	cli.Uint64Flag{
+		Name:  "wheely-cars-limit",
+		Usage: "cars limit to fetch",
+		Value: wheely.DefaultCarsLimit,
+	},
 }
 
 func (a *App) CmdTrySetDefaultAction(cliApp *cli.App) {

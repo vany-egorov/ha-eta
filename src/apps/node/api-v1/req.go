@@ -1,12 +1,16 @@
 package v1
 
+import (
+	"github.com/vany-egorov/ha-eta/models"
+)
+
 type ReqETAMin struct {
-	Lat float64 `form:"lat" json:"lat" binding:"required"`
-	Lng float64 `form:"lng" json:"lng" binding:"required"`
+	models.Point `json:",inline"`
 }
 
 func (it *ReqETAMin) Validate() error {
 	// all validation will be done
 	// on upstreams
+	// just do pass-through
 	return nil
 }
