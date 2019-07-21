@@ -10,4 +10,5 @@ require (
 	go.uber.org/zap v1.10.0
 	gopkg.in/urfave/cli.v1 v1.20.0
 	github.com/dustin/go-humanize v1.0.0
+	github.com/patrickmn/go-cache v2.1.0
 )

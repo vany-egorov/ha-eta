@@ -19,3 +19,5 @@ func (it Points) ToWheelyPoints(tgt *wheely.Points) {
 		tgt.Push(p.Lat, p.Lng)
 	}
 }
+
+func (it *Points) Merge(that Points) { *it = append(*it, that...) }

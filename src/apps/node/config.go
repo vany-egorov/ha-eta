@@ -91,6 +91,22 @@ func (it *config) parse(c *cli.Context) error {
 		})
 	}
 
+	if c.IsSet("do-not-cache-points") && c.Bool("do-not-cache-points") {
+		it.Cache.Common.DoPoints = false
+	}
+	if c.IsSet("do-not-cache-etas") && c.Bool("do-not-cache-etas") {
+		it.Cache.Common.DoETAs = false
+	}
+	if c.IsSet("cache-points-ttl") {
+		it.Cache.Common.PointsTTL = c.Duration("cache-points-ttl")
+	}
+	if c.IsSet("cache-etas-ttl") {
+		it.Cache.Common.ETAsTTL = c.Duration("cache-etas-ttl")
+	}
+	if c.IsSet("cache-clean-up-interval") {
+		it.Cache.Common.CleanUpInterval = c.Duration("cache-clean-up-interval")
+	}
+
 	return nil
 }
 
@@ -104,6 +120,9 @@ func (it *config) defaultize() {
 
 	it.GeoEngine.InitWithKind(geoEngine.DefaultKind)
 	it.GeoEngine.Defaultize()
+
+	it.Cache.InitWithKind(cache.DefaultKind)
+	it.Cache.Defaultize()
 }
 
 func (it *config) build(c *cli.Context, actn action) error {

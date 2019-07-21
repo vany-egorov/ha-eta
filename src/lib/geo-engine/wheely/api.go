@@ -16,6 +16,8 @@ type API struct {
 	cfg    Config
 }
 
+func (it *API) CarsLimit() uint64 { return it.cfg.CarsLimit }
+
 func (it *API) DoCars(ctx context.Context, lat, lng float64, limit uint64, any interface{}, events interface{}) error {
 	if ctx == nil {
 		ctx = context.TODO()

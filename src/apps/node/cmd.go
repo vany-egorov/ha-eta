@@ -3,6 +3,7 @@ package node
 import (
 	cli "gopkg.in/urfave/cli.v1"
 
+	cacheCommon "github.com/vany-egorov/ha-eta/lib/cache/common"
 	geoEngine "github.com/vany-egorov/ha-eta/lib/geo-engine"
 	"github.com/vany-egorov/ha-eta/lib/geo-engine/wheely"
 )
@@ -49,6 +50,27 @@ var flagsMain []cli.Flag = []cli.Flag{
 		Name:  "wheely-cars-limit",
 		Usage: "cars limit to fetch",
 		Value: wheely.DefaultCarsLimit,
+	},
+
+	cli.BoolFlag{
+		Name:  "do-not-cache-points",
+		Usage: "turn points cache off",
+	},
+	cli.BoolFlag{
+		Name:  "do-not-cache-etas",
+		Usage: "turn etas cache off",
+	},
+	cli.DurationFlag{
+		Name:  "cache-points-ttl",
+		Value: cacheCommon.DefaultPointsTTL,
+	},
+	cli.DurationFlag{
+		Name:  "cache-etas-ttl",
+		Value: cacheCommon.DefaultETAsTTL,
+	},
+	cli.DurationFlag{
+		Name:  "cache-clean-up-interval",
+		Value: cacheCommon.DefaultCleanUpInterval,
 	},
 }
 

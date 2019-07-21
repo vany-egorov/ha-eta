@@ -42,6 +42,7 @@ func (it *Config) InitWithKind(kind Kind) error {
 	default:
 		return fmt.Errorf(
 			"got '%s' kind while initializing geo-engine config: only '%s' is supported",
+			kind,
 			KindWheely,
 		)
 	}

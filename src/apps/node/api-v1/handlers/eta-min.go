@@ -68,22 +68,48 @@ func (it *geoDelegate) LogResp(_p string, resp *http.Response, w io.Writer) {
 }
 
 func etaMin(ctx context.Context, sctx ETAMinCtx, prefix string, point models.Point) (models.ETA, error) {
-	points := models.Points{}
-	etas := models.ETAs{}
+	var (
+		points = models.Points{}
+		etas   = models.ETAs{}
 
-	geo := sctx.GeoEngine()
+		pointsHits = models.Points{}
+		etasHits   = models.ETAs{}
+
+		pointsMiss = models.Points{}
+		etasMiss   = models.ETAs{}
+
+		geo       = sctx.GeoEngine()
+		cch       = sctx.Cache()
+		carsLimit = geo.CarsLimit()
+	)
 
 	sctx.FnLog()(log.Info, fmt.Sprintf("%s [<] (:lat %.7f :lng %.7f)",
 		prefix, point.Lat, point.Lng))
 
 	events := geoDelegate{prefix, sctx.FnLog()}
 
-	if err := geo.DoCars(ctx, point.Lat, point.Lng, 0, &points, &events); err != nil {
-		return 0, errors.Wrap(apiErrors.ETAMinGeoEngineCars, err.Error())
+	if ok := cch.GetPoints(point, carsLimit, &points); !ok {
+		if err := geo.DoCars(ctx, point.Lat, point.Lng, carsLimit, &points, &events); err != nil {
+			return 0, errors.Wrap(apiErrors.ETAMinGeoEngineCars, err.Error())
+		}
+
+		cch.SetPoints(point, carsLimit, points)
 	}
 
-	if err := geo.DoPredict(ctx, point.Lat, point.Lng, points, &etas, &events); err != nil {
-		return 0, errors.Wrap(apiErrors.ETAMinGeoEnginePredict, err.Error())
+	if cch.GetETAs(point, points, &pointsHits, &pointsMiss, &etasHits); len(pointsMiss) != 0 {
+		if err := geo.DoPredict(ctx, point.Lat, point.Lng, pointsMiss, &etasMiss, &events); err != nil {
+			return 0, errors.Wrap(apiErrors.ETAMinGeoEnginePredict, err.Error())
+		}
+
+		etasMiss.Merge(etasHits)
+		pointsMiss.Merge(pointsHits)
+
+		etas = etasMiss
+		points = pointsMiss
+
+		cch.SetETAs(point, points, etas)
+	} else {
+		etas = etasHits
 	}
 
 	if len(etas) == 0 {

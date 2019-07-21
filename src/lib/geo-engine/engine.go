@@ -8,6 +8,7 @@ import (
 )
 
 type Engine interface {
+	CarsLimit() uint64
 	DoCars(ctx context.Context, lat, lng float64, limit uint64, any, events interface{}) error
 	DoPredict(ctx context.Context, lat, lng float64, anySrc, anyDst, events interface{}) error
 }
@@ -22,6 +23,7 @@ func NewGeoEngine(cfg *Config) (Engine, error) {
 
 	return nil, fmt.Errorf(
 		"got '%s' kind while constructing geo-engine: only '%s' is supported",
+		cfg.Kind,
 		KindWheely,
 	)
 }
