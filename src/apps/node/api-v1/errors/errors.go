@@ -21,7 +21,7 @@ var (
 		ETAMinReqParse:         "api/v1:(eta/min): error parse or query-values missing",
 		ETAMinGeoEngineCars:    "api/v1:(eta/min): geo-engine call error",
 		ETAMinGeoEnginePredict: "api/v1:(eta/min): geo-engine predict error",
-		ETAMinNoETAsFound:      "api/v1:(eta/min): not ETAs found",
+		ETAMinNoETAsFound:      "api/v1:(eta/min): no ETAs found",
 	}
 
 	errHTTPStatus = map[Err]int{

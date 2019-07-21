@@ -12,9 +12,11 @@ import (
 )
 
 func (it *App) NewRouter() *gin.Engine {
-	// or just `mwLog.New(log.Log)`
+	gin.SetMode(gin.ReleaseMode)
+
+	// or just `mwLog.New(log.Log)` or `mwLog.New(it.ctx.fnLog)`
 	logMw := mwLog.New(func(lvl log.Level, msg string) {
-		log.Log(logger(), lvl, msg)
+		it.ctx.fnLog(lvl, msg)
 	})
 
 	r := gin.New()

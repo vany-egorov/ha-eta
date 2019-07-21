@@ -9,7 +9,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/gin-gonic/gin"
 	cli "gopkg.in/urfave/cli.v1"
 
 	"github.com/vany-egorov/ha-eta/lib/cache"
@@ -19,11 +18,10 @@ import (
 )
 
 type App struct {
-	ctx Context
+	ctx AppContext
 }
 
 func (it *App) start() (outErr error) {
-	gin.SetMode(gin.ReleaseMode)
 	router := it.NewRouter()
 
 	w8Terminate := it.ctx.cfg().Timeout.WaitTerminate

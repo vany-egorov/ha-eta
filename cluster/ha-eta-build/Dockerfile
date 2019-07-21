@@ -19,16 +19,18 @@ ENV GOROOT="/opt/go"
 ENV PATH="${GOROOT}/bin:${PATH}"
 
 WORKDIR /usr/local/src/ha-eta
-ENV GO_LDFLAGS="-s -w -X main.buildDate=${GO_BUILD_DATE} -X \"main.version=0.0.1\" -extldflags -static"
-ENV GOOS="linux"
-ENV GOARCH="amd64"
 
 COPY ./src/go.mod ./
 RUN go mod download
 COPY ./src/ ./
 RUN rm -rvf ./src/go.sum
 
-RUN GO_BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%S) GOOS=${GOOS} GOARCH=${GOARCH} \
-  go build \
-    -v \
-    -ldflags "${GO_LDFLAGS}" -o ./ha-eta ./common.go ./main.go
+RUN /bin/bash ./build.sh
+
+ENV CGO_ENABLED=0
+RUN go test ./apps/node -v
+
+RUN ./ha-eta --version
+RUN ./ha-eta --help
+
+RUN ./ha-eta node --help

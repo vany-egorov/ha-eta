@@ -11,4 +11,7 @@ require (
 	gopkg.in/urfave/cli.v1 v1.20.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/patrickmn/go-cache v2.1.0
+
+	github.com/onsi/ginkgo v1.8.0
+	github.com/onsi/gomega v1.5.0
 )
