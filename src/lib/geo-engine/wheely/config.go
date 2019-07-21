@@ -46,6 +46,8 @@ func (it *Config) Defaultize() {
 	if it.TLSHandshakeTimeout == 0 {
 		it.TLSHandshakeTimeout = defaultTLSHandshakeTimeout
 	}
+
+	it.TLSInsecureSkipVerify = defaultTLSInsecureSkipVerify
 }
 
 func (it *Config) httpClient() *http.Client {

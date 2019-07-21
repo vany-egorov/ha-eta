@@ -1,5 +1,7 @@
 include /etc/nginx/sites-available.d/*.conf;
 
+proxy_cache_path /var/lib/nginx/proxy_cache levels=1:2 keys_zone=eta_cache:32m max_size=1G;
+
 server {
 	listen 80;
 
@@ -8,7 +10,15 @@ server {
 	# error_log /dev/stderr;
 	# access_log /dev/stdout;
 
-	location / {
-		proxy_pass http://ha-eta-node;
+	location /api/v1/eta/min {
+		proxy_pass	http://ha-eta-node;
+
+		proxy_set_header	Host			$host;
+		proxy_set_header	X-Real-IP	$remote_addr;
+
+		proxy_cache				eta_cache;
+		proxy_cache_valid	200 2s;
+		proxy_cache_key		"$request_method|$http_if_modified_since|$http_if_none_match|$host|$request_uri";
+		proxy_hide_header	"Set-Cookie";
 	}
 }
