@@ -1,3 +1,8 @@
+Description
+-----------
+
+HA(high availability) ETA(estimated time of arrival) caching service and cluster
+
 Requirements
 ------------
 
@@ -11,7 +16,7 @@ Architecture overview:
 ```
                                               +-------------+       +----------+
                                               |             |       |          |
-                                              |   nginx(2s) |       |    cache |        +-------------+
+                                              |   nginx(1s) |       |    cache |        +-------------+
                                               |             |       |          |        |             |
                                         +---->+ cache-01    +-------+ node-01  +--------+             |
        +------------------+             |     |             |       |          |        |             |
@@ -31,14 +36,14 @@ VIP / keepalived                              |             |       |           
 ```
 
 - balancer: via nginx round-robin upstream balancing. HAProxy can also be used;
-- cache-0[1-3]: simple http 200 cache with 2s ttl;
+- cache-0[1-3]: simple http 200 cache with 1s ttl;
 - node-0[1-3]: worker nodes;
 - GEO API: API for geo location and prediction;
 
 How to Use
 ----------
 
-[swagger api-vi spec](./blob/master/src/assets/api-v1.yml)
+[swagger api-vi spec](../../blob/master/src/assets/swagger/api-v1.yml)
 
 Clone this app with:
 ``` bash
@@ -75,4 +80,10 @@ $ ./ha-eta -p 8888
 
 # disable cache and custom port
 $ ./ha-eta -p 8888 --do-not-cache-points --do-not-cache-etas
+
+# increase cache TTL
+$ ./ha-eta -p 8888 --cache-points-ttl 15s --cache-etas-ttl 30m
+
+# custom GEO engine url
+$ ./ha-eta -p 8888 --cache-points-ttl 15s --cache-etas-ttl 30m --wheely-url https://prod-api.wheely.com/eta
 ```

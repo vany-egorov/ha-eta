@@ -89,6 +89,16 @@ func (it *geoEngineMock) DoPredict(ctx context.Context, lat, lng float64, anySrc
 	return nil
 }
 
+type geoEngineMockFail struct{}
+
+func (it *geoEngineMockFail) CarsLimit() uint64 { return 0 }
+func (it *geoEngineMockFail) DoCars(ctx context.Context, lat, lng float64, limit uint64, any, events interface{}) error {
+	return fmt.Errorf("geo-engine do-cars error")
+}
+func (it *geoEngineMockFail) DoPredict(ctx context.Context, lat, lng float64, anySrc, anyDst, events interface{}) error {
+	return fmt.Errorf("geo-predict error")
+}
+
 type cacheMock struct {
 	points *models.Points
 
@@ -135,6 +145,7 @@ const (
 
 var _ = Describe("GET ETA min", func() {
 	var (
+		app      *App
 		router   *gin.Engine
 		recorder *httptest.ResponseRecorder
 
@@ -143,7 +154,6 @@ var _ = Describe("GET ETA min", func() {
 		req  *http.Request
 		eReq error
 
-		geoMock *geoEngineMock
 		cchMock *cacheMock
 	)
 
@@ -159,16 +169,7 @@ var _ = Describe("GET ETA min", func() {
 		lat = fnRandomLat()
 		lng = fnRandomLng()
 
-		app := App{}
-
-		geoMock = &geoEngineMock{
-			minETA:    minETA,
-			carsLimit: carsLimit,
-		}
-		app.ctx.setGeoEngine(geoMock)
-
-		cchMock = &cacheMock{}
-		app.ctx.setCache(cchMock)
+		app = &App{}
 
 		app.ctx.setFnLog(log.LogStd)
 
@@ -180,81 +181,26 @@ var _ = Describe("GET ETA min", func() {
 		q.Set("lng", strconv.FormatFloat(lng, 'f', -1, 64))
 
 		urlRaw = fmt.Sprintf("%s?%s", path, q.Encode())
-
-		req, eReq = http.NewRequest(method, urlRaw, nil)
-		recorder.Body.Reset()
-		router.ServeHTTP(recorder, req)
 	})
 
-	AfterEach(func() {
-		recorder.Body.Reset()
-	})
-
-	It("should execute OK", func() {
-		Expect(eReq).ShouldNot(HaveOccurred())
-		Expect(recorder.Code).Should(BeEquivalentTo(http.StatusOK))
-	})
-
-	It("url values should be parsed and passed well", func() {
-		Expect(geoMock.carsLat).Should(BeEquivalentTo(lat))
-		Expect(geoMock.carsLng).Should(BeEquivalentTo(lng))
-
-		Expect(geoMock.predictLat).Should(BeEquivalentTo(lat))
-		Expect(geoMock.predictLng).Should(BeEquivalentTo(lng))
-	})
-
-	It("points and etas should be cached", func() {
-		Expect(cchMock.etas).Should(Not(BeNil()))
-		Expect(cchMock.points).Should(Not(BeNil()))
-
-		Expect(geoMock.etas).Should(BeEquivalentTo(*cchMock.etas))
-		Expect(geoMock.points).Should(BeEquivalentTo(*cchMock.points))
-	})
-
-	It("for first time cache should be MISS", func() {
-		Expect(cchMock.hitETAs).Should(BeFalse())
-		Expect(cchMock.hitPoints).Should(BeFalse())
-	})
-
-	Describe("output value", func() {
+	Context("OK", func() {
 		var (
-			minETAActual = models.ETA(0)
-			eParse       error
+			geoMock *geoEngineMock
 		)
 
 		BeforeEach(func() {
-			v, e := strconv.ParseUint(recorder.Body.String(), 0, 64)
-			minETAActual = models.ETA(v)
-			eParse = e
-		})
+			geoMock = &geoEngineMock{
+				minETA:    minETA,
+				carsLimit: carsLimit,
+			}
+			app.ctx.setGeoEngine(geoMock)
 
-		It("min-eta value should be parsed with no errors", func() {
-			Expect(eParse).Should(Not(HaveOccurred()))
-		})
+			cchMock = &cacheMock{}
+			app.ctx.setCache(cchMock)
 
-		It("should return valid min-ETA value", func() {
-			Expect(minETA).Should(BeEquivalentTo(minETAActual))
-		})
-	})
-
-	Describe("one more time visit", func() {
-		var (
-			minETAActual = models.ETA(0)
-			eParse       error
-		)
-
-		BeforeEach(func() {
 			req, eReq = http.NewRequest(method, urlRaw, nil)
 			recorder.Body.Reset()
 			router.ServeHTTP(recorder, req)
-
-			v, e := strconv.ParseUint(recorder.Body.String(), 0, 64)
-			minETAActual = models.ETA(v)
-			eParse = e
-		})
-
-		AfterEach(func() {
-			recorder.Body.Reset()
 		})
 
 		It("should execute OK", func() {
@@ -262,17 +208,112 @@ var _ = Describe("GET ETA min", func() {
 			Expect(recorder.Code).Should(BeEquivalentTo(http.StatusOK))
 		})
 
-		It("for second time cache should be HIT", func() {
-			Expect(cchMock.hitETAs).Should(BeTrue())
-			Expect(cchMock.hitPoints).Should(BeTrue())
+		It("url values should be parsed and passed well", func() {
+			Expect(geoMock.carsLat).Should(BeEquivalentTo(lat))
+			Expect(geoMock.carsLng).Should(BeEquivalentTo(lng))
+
+			Expect(geoMock.predictLat).Should(BeEquivalentTo(lat))
+			Expect(geoMock.predictLng).Should(BeEquivalentTo(lng))
 		})
 
-		It("min-eta value should be parsed with no errors again", func() {
-			Expect(eParse).Should(Not(HaveOccurred()))
+		It("points and etas should be cached", func() {
+			Expect(cchMock.etas).Should(Not(BeNil()))
+			Expect(cchMock.points).Should(Not(BeNil()))
+
+			Expect(geoMock.etas).Should(BeEquivalentTo(*cchMock.etas))
+			Expect(geoMock.points).Should(BeEquivalentTo(*cchMock.points))
 		})
 
-		It("should return valid min-ETA value again", func() {
-			Expect(minETA).Should(BeEquivalentTo(minETAActual))
+		It("for first time cache should be MISS", func() {
+			Expect(cchMock.hitETAs).Should(BeFalse())
+			Expect(cchMock.hitPoints).Should(BeFalse())
+		})
+
+		Describe("output value", func() {
+			var (
+				minETAActual = models.ETA(0)
+				eParse       error
+			)
+
+			BeforeEach(func() {
+				v, e := strconv.ParseUint(recorder.Body.String(), 0, 64)
+				minETAActual = models.ETA(v)
+				eParse = e
+			})
+
+			It("min-eta value should be parsed with no errors", func() {
+				Expect(eParse).Should(Not(HaveOccurred()))
+			})
+
+			It("should return valid min-ETA value", func() {
+				Expect(minETA).Should(BeEquivalentTo(minETAActual))
+			})
+		})
+
+		Describe("one more time visit", func() {
+			var (
+				minETAActual = models.ETA(0)
+				eParse       error
+			)
+
+			BeforeEach(func() {
+				req, eReq = http.NewRequest(method, urlRaw, nil)
+				recorder.Body.Reset()
+				router.ServeHTTP(recorder, req)
+
+				v, e := strconv.ParseUint(recorder.Body.String(), 0, 64)
+				minETAActual = models.ETA(v)
+				eParse = e
+			})
+
+			It("should execute OK", func() {
+				Expect(eReq).ShouldNot(HaveOccurred())
+				Expect(recorder.Code).Should(BeEquivalentTo(http.StatusOK))
+			})
+
+			It("for second time cache should be HIT", func() {
+				Expect(cchMock.hitETAs).Should(BeTrue())
+				Expect(cchMock.hitPoints).Should(BeTrue())
+			})
+
+			It("min-eta value should be parsed with no errors again", func() {
+				Expect(eParse).Should(Not(HaveOccurred()))
+			})
+
+			It("should return valid min-ETA value again", func() {
+				Expect(minETA).Should(BeEquivalentTo(minETAActual))
+			})
+		})
+	})
+
+	Context("FAIL", func() {
+		var (
+			geoMock *geoEngineMockFail
+		)
+
+		BeforeEach(func() {
+			geoMock = &geoEngineMockFail{}
+			app.ctx.setGeoEngine(geoMock)
+
+			cchMock = &cacheMock{}
+			app.ctx.setCache(cchMock)
+
+			req, eReq = http.NewRequest(method, urlRaw, nil)
+			recorder.Body.Reset()
+			router.ServeHTTP(recorder, req)
+		})
+
+		It("should execute with no errors", func() {
+			Expect(eReq).ShouldNot(HaveOccurred())
+		})
+		It("response should contain some data with error description", func() {
+			Expect(recorder.Body.Len()).ShouldNot(BeZero())
+		})
+		It("content type should be JSON", func() {
+			Expect(recorder.Header().Get("Content-Type")).Should(BeEquivalentTo("application/json"))
+		})
+		It("geo-engine fail should handle well", func() {
+			Expect(recorder.Code).Should(BeEquivalentTo(http.StatusBadGateway))
 		})
 	})
 })

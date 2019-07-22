@@ -40,6 +40,8 @@ func Send(rw http.ResponseWriter, err error) {
 	if body, e := json.Marshal(&resp); e != nil {
 		http.Error(rw, e.Error(), httpStatus(e))
 	} else {
-		http.Error(rw, string(body), httpStatus(errors.Cause(err)))
+		rw.Header().Set("Content-Type", "application/json")
+		rw.WriteHeader(httpStatus(errors.Cause(err)))
+		rw.Write(body)
 	}
 }

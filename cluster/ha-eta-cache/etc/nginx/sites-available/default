@@ -17,7 +17,7 @@ server {
 		proxy_set_header	X-Real-IP	$remote_addr;
 
 		proxy_cache				eta_cache;
-		proxy_cache_valid	200 2s;
+		proxy_cache_valid	200 1s;
 		proxy_cache_key		"$request_method|$http_if_modified_since|$http_if_none_match|$host|$request_uri";
 		proxy_hide_header	"Set-Cookie";
 	}
