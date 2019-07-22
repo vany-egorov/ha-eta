@@ -4,8 +4,41 @@ Requirements
 - docker with docker-compose
 - golang (for development)
 
+Diagrams
+--------
+
+Architecture overview:
+```
+                                              +-------------+       +----------+
+                                              |             |       |          |
+                                              |   nginx(2s) |       |    cache |        +-------------+
+                                              |             |       |          |        |             |
+                                        +---->+ cache-01    +-------+ node-01  +--------+             |
+       +------------------+             |     |             |       |          |        |             |
+       |                  |             |     +-------------+       +----------+        |             |
++------+ balancer         +-------------+                                               |             |
+|      |                  |             |     +-------------+       +-----------+       |             |
+|      +------------------+             |     |             |       |           |       |             |
+|                           round-robin +---->+ cache-02    +------>+ node-02   +------->  GEO API    |
+|      +------------------+             |     |             |       |           |       |             |
+|      |                  |             |     +-------------+       +-----------+       |             |
++----->+ balancer.backup  |             |                                               |             |
+       |                  |             |     +-------------+       +-----------+       |             |
+       +------------------+             |     |             |       |           |       |             |
+                                        +---->+ cache-03    +------>+ node-03   +------>+             |
+VIP / keepalived                              |             |       |           |       |             |
+                                              +-------------+       +-----------+       +-------------+
+```
+
+- balancer: via nginx round-robin upstream balancing. HAProxy can also be used;
+- cache-0[1-3]: simple http 200 cache with 2s ttl;
+- node-0[1-3]: worker nodes;
+- GEO API: API for geo location and prediction;
+
 How to Use
 ----------
+
+[swagger api-vi spec](./blob/master/src/assets/api-v1.yml)
 
 Clone this app with:
 ``` bash

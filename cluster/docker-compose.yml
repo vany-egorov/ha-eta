@@ -41,6 +41,7 @@ services:
     hostname: ha-eta-cache-01
     volumes:
       - ./ha-eta-cache/etc/nginx/sites-available:/etc/nginx/sites-available:ro
+      - ./ha-eta-cache/etc/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./ha-eta-cache/etc/nginx/sites-available.d/01:/etc/nginx/sites-available.d:ro
     depends_on:
       - ha-eta-node-01
@@ -50,6 +51,7 @@ services:
     hostname: ha-eta-cache-02
     volumes:
       - ./ha-eta-cache/etc/nginx/sites-available:/etc/nginx/sites-available:ro
+      - ./ha-eta-cache/etc/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./ha-eta-cache/etc/nginx/sites-available.d/02:/etc/nginx/sites-available.d:ro
     depends_on:
       - ha-eta-node-02
@@ -59,6 +61,7 @@ services:
     hostname: ha-eta-cache-03
     volumes:
       - ./ha-eta-cache/etc/nginx/sites-available:/etc/nginx/sites-available:ro
+      - ./ha-eta-cache/etc/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./ha-eta-cache/etc/nginx/sites-available.d/03:/etc/nginx/sites-available.d:ro
     depends_on:
       - ha-eta-node-03
