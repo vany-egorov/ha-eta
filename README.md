@@ -67,7 +67,7 @@ $ curl -XGET 'http://127.0.0.1:9179/api/v1/eta/min?lat=55.752992&lng=37.618333'
 $ watch -n -1 "curl -XGET 'http://127.0.0.1:9179/api/v1/eta/min?lat=55.752992&lng=37.618333'"
 ```
 
-build app and run without docker (**golang** required) for development:
+build app and run without docker (**golang** required) for development and local run and testing:
 ``` bash
 $ cd ha-eta/src
 $ chmod +x ./build.sh
