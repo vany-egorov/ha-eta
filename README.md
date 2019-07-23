@@ -43,7 +43,7 @@ VIP / keepalived                              |             |       |           
 How to Use
 ----------
 
-[swagger api-vi spec](../../blob/master/src/assets/swagger/api-v1.yml)
+[swagger api-v1 spec](../../blob/master/src/assets/swagger/api-v1.yml)
 
 Clone this app with:
 ``` bash
